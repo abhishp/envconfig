@@ -794,7 +794,7 @@ func TestCheckDisallowedIgnored(t *testing.T) {
 
 func TestErrorMessageForRequiredAltVar(t *testing.T) {
 	var s struct {
-		Foo    string `envconfig:"BAR" required:"true"`
+		Foo string `envconfig:"BAR" required:"true"`
 	}
 
 	os.Clearenv()
@@ -806,6 +806,33 @@ func TestErrorMessageForRequiredAltVar(t *testing.T) {
 
 	if !strings.Contains(err.Error(), " BAR ") {
 		t.Errorf("expected error message to contain BAR, got \"%v\"", err)
+	}
+}
+
+func TestGlobalSplitVars(t *testing.T) {
+	specs := struct {
+		IntValue     int
+		BoolValue    bool `split_words:"false"`
+		StringsValue []string
+	}{}
+	os.Clearenv()
+	os.Setenv("INT_VALUE", "4")
+	os.Setenv("BOOLVALUE", "true")
+	os.Setenv("STRINGS_VALUE", "hello,world,strings")
+	if err := Process("", &specs, WithAutoSplitWords); err != nil {
+		t.Errorf("expected to have no error, got %#v", err)
+	}
+	if specs.IntValue != 4 {
+		t.Errorf("expected %d, got %v", 4, specs.IntValue)
+	}
+	if !specs.BoolValue {
+		t.Errorf("expected %t, got %v", true, specs.BoolValue)
+	}
+	if len(specs.StringsValue) != 3 ||
+		specs.StringsValue[0] != "hello" ||
+		specs.StringsValue[1] != "world" ||
+		specs.StringsValue[2] != "strings" {
+		t.Errorf("expected %#v, got %#v", []string{"hello", "world", "strings"}, specs.StringsValue)
 	}
 }
 
@@ -859,6 +886,6 @@ func BenchmarkGatherInfo(b *testing.B) {
 	os.Setenv("ENV_CONFIG_MULTI_WORD_VAR_WITH_AUTO_SPLIT", "24")
 	for i := 0; i < b.N; i++ {
 		var s Specification
-		gatherInfo("env_config", &s)
+		gatherInfo("env_config", &s, Options{})
 	}
 }
