@@ -229,3 +229,28 @@ type SMSProviderConfig struct {
 
 Also, envconfig will use a `Set(string) error` method like from the
 [flag.Value](https://godoc.org/flag#Value) interface if implemented.
+
+## Global Options
+
+Use options while processing a specification to enable certain functionality on all the fields. 
+```go
+type Specification struct {
+    ManualOverride1 string `envconfig:"manual_override_1"`
+    DefaultVar      string `default:"foobar"`
+    RequiredVar     string `required:"true"`
+    IgnoredVar      string `ignored:"true"`
+    AutoSplitVar    string `split_words:"true"`
+    RequiredAndAutoSplitVar    string `required:"true" split_words:"true"`
+}
+var s Specification
+_ := envvonfig.Process("myapp", &s, func(options *envconfig.Options) {
+    options.AutoSplitWords = true	 
+})
+```
+### WithAutoSplitWords
+
+Sets the automatic splitting of words globally for the specification.
+```go
+_ := envvonfig.Process("myapp", &s, envconfig.WithAutoSplitWords)
+_ := envvonfig.MustProcess("myapp", &s, envconfig.WithAutoSplitWords)
+```
